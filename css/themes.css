@@ -1,0 +1,123 @@
+/* ==========================================================================
+   SISTEMA DE TEMAS DE ALTA GAMA: INDUSTRIAL & NAVIDAD VIVA
+   ========================================================================== */
+
+:root, [data-theme="industrial"] {
+  --bg-app: #090d16;
+  --bg-card: #111827;
+  --bg-card-elevated: #182234;
+  --bg-input: #1e293b;
+  --border: #2a3950;
+  --border-glow: rgba(245, 158, 11, 0.35);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #f59e0b;
+  --accent-soft: rgba(245, 158, 11, 0.16);
+  --accent-text: #090d16;
+  --ok: #10b981;
+  --ok-soft: rgba(16, 185, 129, 0.16);
+  --fail: #ef4444;
+  --fail-soft: rgba(239, 68, 68, 0.16);
+  --warn: #eab308;
+  --warn-soft: rgba(234, 179, 8, 0.15);
+  --pa-done: #38bdf8;
+  --shadow-card: 0 8px 24px -6px rgba(0, 0, 0, 0.55);
+  --header-bg: rgba(17, 24, 39, 0.92);
+}
+
+/* ==========================================================================
+   TEMA NAVIDAD: Bosque profundo, luces parpadeantes, bastón de caramelo y nieve
+   ========================================================================== */
+[data-theme="navidad"] {
+  --bg-app: #06120d;
+  --bg-card: #0d2219;
+  --bg-card-elevated: #133124;
+  --bg-input: #173b2b;
+  --border: #255741;
+  --border-glow: rgba(251, 191, 36, 0.45);
+  --text-main: #f8fafc;
+  --text-muted: #a7d1be;
+  --accent: #e11d48;          /* Rojo festivo vibrante */
+  --accent-soft: rgba(225, 29, 72, 0.22);
+  --accent-text: #ffffff;
+  --ok: #22c55e;              /* Verde pino brillante */
+  --ok-soft: rgba(34, 197, 94, 0.18);
+  --fail: #f59e0b;            /* Dorado alerta cálido */
+  --fail-soft: rgba(245, 158, 11, 0.2);
+  --warn: #fde047;
+  --warn-soft: rgba(253, 224, 71, 0.15);
+  --pa-done: #fbbf24;
+  --shadow-card: 0 10px 28px -6px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --header-bg: rgba(13, 34, 25, 0.94);
+}
+
+/* Fondo con brillo festivo sutil en Navidad */
+[data-theme="navidad"] body {
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(225, 29, 72, 0.12), transparent 35%),
+    radial-gradient(circle at 85% 20%, rgba(251, 191, 36, 0.10), transparent 35%);
+}
+
+/* Canvas de Nieve */
+#snowCanvas {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 90;
+}
+
+[data-theme="navidad"] #snowCanvas {
+  display: block;
+}
+
+/* Guirnalda de luces navideñas en el borde del encabezado */
+.navidad-garland {
+  display: none;
+  justify-content: space-around;
+  align-items: center;
+  height: 10px;
+  padding: 0 8px;
+  background: linear-gradient(90deg, #091a13, #123325, #091a13);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.25);
+  overflow: hidden;
+}
+
+[data-theme="navidad"] .navidad-garland {
+  display: flex;
+}
+
+.navidad-garland span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  animation: twinkleLights 1.8s infinite alternate ease-in-out;
+}
+
+.navidad-garland span:nth-child(4n+1) { background: #ef4444; box-shadow: 0 0 8px #ef4444; animation-delay: 0s; }
+.navidad-garland span:nth-child(4n+2) { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; animation-delay: 0.45s; }
+.navidad-garland span:nth-child(4n+3) { background: #22c55e; box-shadow: 0 0 8px #22c55e; animation-delay: 0.9s; }
+.navidad-garland span:nth-child(4n+4) { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; animation-delay: 1.35s; }
+
+@keyframes twinkleLights {
+  0% { opacity: 0.35; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Barra de progreso tipo bastón de caramelo en Navidad */
+[data-theme="navidad"] .progress-fill {
+  background: repeating-linear-gradient(
+    -45deg,
+    #e11d48,
+    #e11d48 10px,
+    #f8fafc 10px,
+    #f8fafc 20px
+  );
+}
+
+/* Detalle dorado en tarjetas seleccionadas en Navidad */
+[data-theme="navidad"] .op-card {
+  border-color: rgba(37, 87, 65, 0.95);
+}

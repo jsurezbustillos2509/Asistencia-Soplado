@@ -3,266 +3,225 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Control de Asistencia | Planta</title>
-  <style>
-    /* ==========================================================================
-       SISTEMA DE TEMAS (EDITABLE FÁCILMENTE PARA FESTIVIDADES)
-       Cambia data-theme en <body> a: "industrial", "navidad" o "halloween"
-       ========================================================================== */
-    :root, [data-theme="industrial"] {
-      --bg-app: #0b0f17;
-      --bg-card: #151c28;
-      --bg-input: #1e293b;
-      --border: #2b384e;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #f59e0b;       /* Ámbar industrial */
-      --accent-text: #0b0f17;
-      --ok: #10b981;           /* Verde Asistió */
-      --fail: #ef4444;         /* Rojo Faltó */
-      --pa-done: #3b82f6;      /* Azul Cargado en Power Apps */
-    }
-
-    [data-theme="navidad"] {
-      --bg-app: #091510;
-      --bg-card: #11261d;
-      --bg-input: #19382b;
-      --border: #275441;
-      --text-main: #f8fafc;
-      --text-muted: #a7c7b7;
-      --accent: #dc2626;       /* Rojo navideño */
-      --accent-text: #ffffff;
-      --ok: #16a34a;           /* Verde pino */
-      --fail: #f59e0b;         /* Dorado alerta */
-      --pa-done: #eab308;
-    }
-
-    [data-theme="halloween"] {
-      --bg-app: #120d1d;
-      --bg-card: #1e1630;
-      --bg-input: #2b2044;
-      --border: #3f3063;
-      --text-main: #faf5ff;
-      --text-muted: #c4b5fd;
-      --accent: #f97316;       /* Naranja calabaza */
-      --accent-text: #120d1d;
-      --ok: #22c55e;
-      --fail: #e11d48;
-      --pa-done: #a855f7;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg-app); color: var(--text-main); padding-bottom: 135px; }
-
-    /* HEADER & CONTROLES SUPERIORES */
-    header {
-      position: sticky; top: 0; z-index: 20;
-      background: var(--bg-card); border-bottom: 1px solid var(--border);
-      padding: 12px 14px;
-    }
-    .top-bar { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .date-box {
-      background: var(--bg-input); border: 1px solid var(--border);
-      color: var(--accent); font-weight: 700; font-size: 0.9rem;
-      padding: 8px 12px; border-radius: 8px; width: 135px; text-align: center;
-    }
-    .shift-btn {
-      flex: 1; background: var(--accent); color: var(--accent-text);
-      border: none; border-radius: 8px; padding: 9px 12px;
-      font-weight: 800; font-size: 0.92rem; cursor: pointer;
-    }
-    .theme-select {
-      background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border);
-      border-radius: 8px; padding: 8px; font-size: 0.85rem;
-    }
-
-    /* 4 BOTONES DE ACCIÓN EN PANTALLA 1 */
-    .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
-    .btn-filter, .btn-staff {
-      padding: 9px 4px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--bg-input); color: var(--text-main);
-      font-size: 0.8rem; font-weight: 700; cursor: pointer; text-align: center;
-    }
-    .btn-filter.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-    .btn-add { border-color: var(--ok); color: var(--ok); }
-    .btn-del { border-color: var(--fail); color: var(--fail); }
-
-    /* CONTENEDOR PRINCIPAL */
-    main { padding: 12px 14px; }
-    .view { display: none; }
-    .view.active { display: block; }
-
-    .status-banner {
-      display: flex; justify-content: space-between; align-items: center;
-      background: var(--bg-card); border: 1px solid var(--border);
-      padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.82rem; color: var(--text-muted);
-    }
-
-    /* TARJETAS DE OPERADOR */
-    .op-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 10px; padding: 11px 12px; margin-bottom: 9px;
-      transition: opacity 0.2s;
-    }
-    .op-card.pa-checked { opacity: 0.45; border-left: 4px solid var(--pa-done); }
-    .op-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
-    .op-name { font-size: 0.95rem; font-weight: 700; line-height: 1.25; }
-    .op-ci { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); background: var(--bg-input); padding: 2px 6px; border-radius: 4px; }
-
-    /* CHECKBOXES TÁCTILES ASISTIÓ / FALTÓ */
-    .check-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-    .chk-btn {
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 9px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--bg-input); color: var(--text-muted); font-weight: 700; font-size: 0.85rem; cursor: pointer;
-    }
-    .chk-btn.present.selected { background: rgba(16, 185, 129, 0.2); border-color: var(--ok); color: var(--ok); }
-    .chk-btn.absent.selected { background: rgba(239, 68, 68, 0.2); border-color: var(--fail); color: var(--fail); }
-
-    .comment-input {
-      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
-      color: var(--text-main); border-radius: 6px; padding: 7px 10px; font-size: 0.82rem;
-    }
-
-    /* MODO ESPEJO POWER APPS (PANTALLA 2) */
-    .pa-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .btn-copy {
-      background: var(--bg-input); border: 1px solid var(--accent); color: var(--accent);
-      padding: 7px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer;
-    }
-    .pa-chk-label {
-      display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700;
-      background: var(--bg-input); padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer;
-    }
-    .pa-chk-label input { width: 18px; height: 18px; accent-color: var(--pa-done); }
-
-    /* CONSOLIDADO MENSUAL (PANTALLA 3) */
-    .month-controls { display: flex; gap: 8px; margin-bottom: 10px; }
-    .month-controls input {
-      flex: 1; background: var(--bg-card); border: 1px solid var(--border);
-      color: var(--text-main); padding: 9px; border-radius: 8px;
-    }
-    .hist-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 10px; padding: 11px; margin-bottom: 8px;
-    }
-    .hist-stats { display: flex; gap: 12px; margin-top: 6px; font-size: 0.82rem; font-weight: 700; }
-    .hist-details { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); font-size: 0.8rem; color: var(--text-muted); }
-
-    /* BOTÓN FLOTANTE REGISTRAR */
-    .save-bar {
-      position: fixed; bottom: 58px; left: 0; right: 0;
-      padding: 10px 14px; background: linear-gradient(transparent, var(--bg-app) 30%);
-      z-index: 15;
-    }
-    .btn-save {
-      width: 100%; background: var(--ok); color: #052e16; border: none;
-      padding: 13px; border-radius: 10px; font-weight: 900; font-size: 1rem;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.4); cursor: pointer;
-    }
-
-    /* NAVEGACIÓN INFERIOR */
-    nav {
-      position: fixed; bottom: 0; left: 0; right: 0; height: 58px;
-      background: var(--bg-card); border-top: 1px solid var(--border);
-      display: grid; grid-template-columns: 1fr 1fr 1fr; z-index: 25;
-    }
-    .nav-btn {
-      background: none; border: none; color: var(--text-muted);
-      font-size: 0.78rem; font-weight: 700; cursor: pointer;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-    }
-    .nav-btn.active { color: var(--accent); border-top: 2px solid var(--accent); }
-
-    /* MODAL */
-    .modal-backdrop {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
-      z-index: 50; align-items: center; justify-content: center; padding: 16px;
-    }
-    .modal-backdrop.open { display: flex; }
-    .modal-box {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 12px; width: 100%; max-width: 400px; padding: 16px;
-    }
-    .modal-box h3 { margin-bottom: 12px; color: var(--accent); }
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
-    .form-group input, .form-group select {
-      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--bg-input); color: var(--text-main); font-size: 0.9rem;
-    }
-    .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
-    .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; }
-  </style>
+  <title>Control de Asistencia | Planta Industrial</title>
+  <link rel="stylesheet" href="css/themes.css" />
+  <link rel="stylesheet" href="css/app.css" />
 </head>
 <body data-theme="industrial">
 
-  <header>
-    <div class="top-bar">
-      <!-- Textbox automático de fecha del celular -->
-      <input type="text" id="fechaAuto" class="date-box" readonly />
-      <!-- Botón selector de turno -->
-      <button id="btnTurno" class="shift-btn" onclick="ciclarTurno()">Turno 1</button>
-      <!-- Selector rápido de tema visual -->
-      <select class="theme-select" onchange="cambiarTema(this.value)" title="Tema">
-        <option value="industrial">⚙️ Dark</option>
-        <option value="navidad">🎄 Nav</option>
-        <option value="halloween">🎃 Hal</option>
-      </select>
+  <!-- Lienzo de nieve GPU (activo solo en tema Navidad) -->
+  <canvas id="snowCanvas" aria-hidden="true"></canvas>
+
+  <!-- Contenedor de notificaciones Toast no intrusivas -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <header class="app-header">
+    <!-- Guirnalda de luces navideñas (visible solo en tema Navidad) -->
+    <div class="navidad-garland" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
     </div>
 
-    <!-- 4 Botones requeridos en encabezado -->
-    <div class="action-grid" id="headerControls">
-      <button class="btn-filter active" id="btnFijos" onclick="filtrarTipo('Fijo')">Fijos</button>
-      <button class="btn-filter" id="btnEventuales" onclick="filtrarTipo('Eventual')">Eventuales</button>
-      <button class="btn-staff btn-add" onclick="abrirModal('add')">+ Añadir</button>
-      <button class="btn-staff btn-del" onclick="abrirModal('del')">- Baja</button>
+    <div class="header-inner">
+      <div class="top-bar">
+        <div class="date-pill">
+          <span class="pill-label">FECHA</span>
+          <input type="text" id="fechaAuto" class="date-box" readonly />
+        </div>
+
+        <button id="btnTurno" class="shift-btn" onclick="App.ciclarTurno()" title="Cambiar turno operativo">
+          <span class="shift-dot"></span>
+          <span id="textoTurno">Turno 1</span>
+          <span class="shift-hint">↻</span>
+        </button>
+
+        <select id="themeSelect" class="theme-select" onchange="App.cambiarTema(this.value)" title="Ambiente visual">
+          <option value="industrial">⚙️ Industrial</option>
+          <option value="navidad">🎄 Navidad</option>
+        </select>
+      </div>
+
+      <!-- Controles exclusivos de Pase de Lista -->
+      <div class="action-grid" id="headerControls">
+        <button class="btn-filter active" id="btnFijos" onclick="App.filtrarTipo('Fijo')">Fijos</button>
+        <button class="btn-filter" id="btnEventuales" onclick="App.filtrarTipo('Eventual')">Eventuales</button>
+        <button class="btn-staff btn-add" onclick="App.abrirModal('add')">+ Alta</button>
+        <button class="btn-staff btn-del" onclick="App.abrirModal('del')">- Baja</button>
+      </div>
     </div>
   </header>
 
-  <main>
-    <!-- PANTALLA 1: PASE DE LISTA -->
+  <main class="app-main">
+    <!-- =========================================================
+         PANTALLA 1: PASE DE LISTA EN PLANTA
+         ========================================================= -->
     <section id="view-lista" class="view active">
+      <!-- Panel KPI de telemetría en vivo -->
+      <div class="kpi-strip">
+        <div class="kpi-card">
+          <span class="kpi-val" id="kpiTotal">0</span>
+          <span class="kpi-lbl">Nómina</span>
+        </div>
+        <div class="kpi-card kpi-ok">
+          <span class="kpi-val" id="kpiAsistio">0</span>
+          <span class="kpi-lbl">Asistieron</span>
+        </div>
+        <div class="kpi-card kpi-fail">
+          <span class="kpi-val" id="kpiFalto">0</span>
+          <span class="kpi-lbl">Faltaron</span>
+        </div>
+        <div class="kpi-card kpi-pend">
+          <span class="kpi-val" id="kpiPendiente">0</span>
+          <span class="kpi-lbl">Sin marcar</span>
+        </div>
+      </div>
+
+      <div class="progress-track">
+        <div id="kpiProgressBar" class="progress-fill" style="width: 0%"></div>
+      </div>
+
+      <!-- Barra de búsqueda rápida -->
+      <div class="toolbar-row">
+        <input type="search" id="buscarOperador" class="search-input"
+          placeholder="🔍 Filtrar operador por nombre o CI..." oninput="App.renderLista()" />
+      </div>
+
       <div class="status-banner">
         <span id="contadorVista">Cargando personal...</span>
-        <span id="syncStatus">● Conectando...</span>
+        <span id="syncStatus" class="sync-badge">● Conectando...</span>
       </div>
-      <div id="listaOperadores"></div>
+
+      <div id="listaOperadores" class="cards-grid"></div>
     </section>
 
-    <!-- PANTALLA 2: MODO ESPEJO POWER APPS (A-Z UNIFICADO + CHECK FRONTEND) -->
+    <!-- =========================================================
+         PANTALLA 2: MODO ESPEJO POWER APPS (A-Z)
+         ========================================================= -->
     <section id="view-espejo" class="view">
-      <div class="status-banner">
-        <span>Orden A–Z idéntico a Power Apps</span>
-        <strong id="contadorPA" style="color:var(--accent)">Pendientes: 0</strong>
+      <div class="mirror-header-card">
+        <div>
+          <h2 class="section-title">Espejo Power Apps (A–Z)</h2>
+          <p class="section-sub">Orden alfabético unificado para carga rápida de CA</p>
+        </div>
+        <div class="mirror-counter">
+          <span id="contadorPA">0 / 0</span>
+          <small>Cargados</small>
+        </div>
       </div>
-      <div id="listaEspejoPA"></div>
+
+      <div class="progress-track">
+        <div id="paProgressBar" class="progress-fill pa-fill" style="width: 0%"></div>
+      </div>
+
+      <div class="toolbar-row">
+        <input type="search" id="buscarPA" class="search-input"
+          placeholder="🔍 Buscar en lista A–Z..." oninput="App.renderEspejoPA()" />
+        <select id="filtroEstadoPA" class="filter-select" onchange="App.renderEspejoPA()">
+          <option value="TODOS">Todos</option>
+          <option value="PENDIENTES">Pendientes PA</option>
+          <option value="ASISTIO">Solo Asistieron</option>
+          <option value="FALTO">Solo Faltaron</option>
+        </select>
+      </div>
+
+      <div id="listaEspejoPA" class="cards-grid"></div>
     </section>
 
-    <!-- PANTALLA 3: CONSOLIDADO MENSUAL RR.HH. -->
+    <!-- =========================================================
+         PANTALLA 3: CALENDARIO INTERACTIVO & AUDITORÍA RR.HH.
+         ========================================================= -->
     <section id="view-historial" class="view">
-      <div class="month-controls">
-        <input type="month" id="filtroMes" onchange="renderHistorial()" />
-        <input type="text" id="buscarHistorial" placeholder="Buscar nombre o CI..." oninput="renderHistorial()" />
+      <div class="rrhh-layout">
+        <!-- Columna izquierda: Calendario Mensual -->
+        <div class="calendar-panel">
+          <div class="cal-header">
+            <button class="cal-nav-btn" onclick="CalendarModule.cambiarMes(-1)" aria-label="Mes anterior">◀</button>
+            <div class="cal-title-group">
+              <h2 id="calMesTitulo">Noviembre 2026</h2>
+              <input type="month" id="filtroMes" class="month-hidden-picker" onchange="CalendarModule.seleccionarMesInput(this.value)" />
+            </div>
+            <button class="cal-nav-btn" onclick="CalendarModule.cambiarMes(1)" aria-label="Mes siguiente">▶</button>
+          </div>
+
+          <div class="cal-legend">
+            <span><i class="dot ok"></i>Con registros</span>
+            <span><i class="dot fail"></i>Con faltas</span>
+            <span><i class="dot selected"></i>Seleccionado</span>
+          </div>
+
+          <div class="cal-weekdays">
+            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+          </div>
+          <div id="calGrid" class="cal-grid"></div>
+        </div>
+
+        <!-- Columna derecha: Lista detallada del día seleccionado -->
+        <div class="day-audit-panel">
+          <div class="audit-header">
+            <div>
+              <span class="pill-label">AUDITORÍA DIARIA</span>
+              <h3 id="fechaSeleccionadaTitulo">2026-11-23</h3>
+            </div>
+            <div class="audit-summary-pills" id="resumenDiaPills"></div>
+          </div>
+
+          <!-- Filtros de Turno (Los 3 turnos juntos y filtrables) -->
+          <div class="shift-tabs" id="calShiftTabs">
+            <button class="tab-pill active" data-turno="TODOS" onclick="CalendarModule.setFiltroTurno('TODOS', this)">Todos (3 Turnos)</button>
+            <button class="tab-pill" data-turno="Turno 1" onclick="CalendarModule.setFiltroTurno('Turno 1', this)">Turno 1</button>
+            <button class="tab-pill" data-turno="Turno 2" onclick="CalendarModule.setFiltroTurno('Turno 2', this)">Turno 2</button>
+            <button class="tab-pill" data-turno="Turno 3" onclick="CalendarModule.setFiltroTurno('Turno 3', this)">Turno 3</button>
+          </div>
+
+          <!-- Filtro por estado y búsqueda -->
+          <div class="toolbar-row">
+            <input type="search" id="buscarHistorial" class="search-input"
+              placeholder="🔍 Buscar persona o CI..." oninput="CalendarModule.renderDetalleDia()" />
+            <select id="filtroEstadoDia" class="filter-select" onchange="CalendarModule.renderDetalleDia()">
+              <option value="TODOS">Todos</option>
+              <option value="Faltó">✖ Faltó</option>
+              <option value="Asistió">✔ Asistió</option>
+              <option value="Sin registro">⚠️ Sin registro</option>
+            </select>
+          </div>
+
+          <div id="listaDetalleDia" class="audit-list"></div>
+        </div>
       </div>
-      <div id="listaHistorial"></div>
     </section>
   </main>
 
+  <!-- Barra flotante de guardado -->
   <div class="save-bar" id="saveBar">
-    <button class="btn-save" onclick="registrarAsistencia()">REGISTRAR EN SHEETS</button>
+    <button id="btnGuardarSheets" class="btn-save" onclick="App.registrarAsistencia()">
+      💾 REGISTRAR EN GOOGLE SHEETS
+    </button>
   </div>
 
-  <nav>
-    <button class="nav-btn active" onclick="cambiarVista('lista', this)">📋<span>Pase Lista</span></button>
-    <button class="nav-btn" onclick="cambiarVista('espejo', this)">⚡<span>Espejo PA</span></button>
-    <button class="nav-btn" onclick="cambiarVista('historial', this)">📊<span>Mes RR.HH.</span></button>
+  <!-- Navegación inferior -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" onclick="App.cambiarVista('lista', this)">
+      <span class="nav-icon">📋</span>
+      <span>Pase Lista</span>
+    </button>
+    <button class="nav-btn" onclick="App.cambiarVista('espejo', this)">
+      <span class="nav-icon">⚡</span>
+      <span>Espejo PA</span>
+    </button>
+    <button class="nav-btn" onclick="App.cambiarVista('historial', this)">
+      <span class="nav-icon">📅</span>
+      <span>Mes RR.HH.</span>
+    </button>
   </nav>
 
-  <!-- MODAL AÑADIR / BAJA LÓGICA -->
+  <!-- MODAL ALTA / BAJA -->
   <div class="modal-backdrop" id="modalBackdrop">
     <div class="modal-box" id="modalAddContent">
-      <h3>Añadir Operador</h3>
+      <div class="modal-head">
+        <h3>➕ Alta de Operador</h3>
+        <button class="modal-close" onclick="App.cerrarModal()">✕</button>
+      </div>
       <div class="form-group">
         <label>Cédula de Identidad (CI - Clave Única)</label>
         <input type="text" id="newCI" placeholder="Ej. 8948466" />
@@ -273,374 +232,41 @@
       </div>
       <div class="form-group">
         <label>Tipo de Contrato</label>
-        <select id="newTipo" onchange="toggleFechaIngreso()">
+        <select id="newTipo" onchange="App.toggleFechaIngreso()">
           <option value="Eventual">Eventual</option>
           <option value="Fijo">Fijo</option>
         </select>
       </div>
-      <!-- Solo visible cuando es Eventual -->
       <div class="form-group" id="groupFechaIngreso">
         <label>Fecha de Ingreso (Solo Eventuales)</label>
         <input type="date" id="newFechaIngreso" />
       </div>
       <div class="modal-actions">
-        <button style="background:var(--bg-input);color:var(--text-main)" onclick="cerrarModal()">Cancelar</button>
-        <button style="background:var(--ok);color:#052e16" onclick="guardarNuevoOperador()">Guardar</button>
+        <button class="btn-sec" onclick="App.cerrarModal()">Cancelar</button>
+        <button class="btn-pri-ok" onclick="App.guardarNuevoOperador()">Guardar Alta</button>
       </div>
     </div>
 
     <div class="modal-box" id="modalDelContent" style="display:none">
-      <h3 style="color:var(--fail)">Dar de Baja (Conserva Historial)</h3>
+      <div class="modal-head">
+        <h3 style="color:var(--fail)">➖ Baja Lógica (Conserva Historial)</h3>
+        <button class="modal-close" onclick="App.cerrarModal()">✕</button>
+      </div>
       <div class="form-group">
         <label>Selecciona el operador a retirar de la lista activa</label>
         <select id="selectBajaCI"></select>
       </div>
       <div class="modal-actions">
-        <button style="background:var(--bg-input);color:var(--text-main)" onclick="cerrarModal()">Cancelar</button>
-        <button style="background:var(--fail);color:#fff" onclick="confirmarBaja()">Confirmar Baja</button>
+        <button class="btn-sec" onclick="App.cerrarModal()">Cancelar</button>
+        <button class="btn-pri-fail" onclick="App.confirmarBaja()">Confirmar Baja</button>
       </div>
     </div>
   </div>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzFvIXVyq19pHWolve3c_vlXhzB0QtjUqfUCm0kphVU68ODI6t7FakVuxORl-u9hqpD/exec";
-
-    const TURNOS = ["Turno 1", "Turno 2", "Turno 3"];
-    let turnoIdx = 0;
-    let filtroActual = "Fijo";
-    let personalActivo = [];
-    let historialDatos = [];
-    let asistenciaHoy = {};
-
-    function obtenerFechaLocal() {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    }
-
-    const FECHA_HOY = obtenerFechaLocal();
-
-    window.onload = () => {
-      document.getElementById("fechaAuto").value = FECHA_HOY;
-      document.getElementById("newFechaIngreso").value = FECHA_HOY;
-      document.getElementById("filtroMes").value = FECHA_HOY.slice(0, 7);
-      const savedTheme = localStorage.getItem("app_theme") || "industrial";
-      document.body.setAttribute("data-theme", savedTheme);
-      document.querySelector(".theme-select").value = savedTheme;
-      cargarDatosDesdeSheets();
-    };
-
-    function cambiarTema(tema) {
-      document.body.setAttribute("data-theme", tema);
-      localStorage.setItem("app_theme", tema);
-    }
-
-    function sincronizarAsistenciaDelTurno() {
-      asistenciaHoy = {};
-      historialDatos.forEach(h => {
-        if (h.fecha === FECHA_HOY && h.turno === TURNOS[turnoIdx]) {
-          asistenciaHoy[h.ci] = { estado: h.estado, comentario: h.comentario };
-        }
-      });
-    }
-
-    function ciclarTurno() {
-      turnoIdx = (turnoIdx + 1) % TURNOS.length;
-      document.getElementById("btnTurno").textContent = TURNOS[turnoIdx];
-      sincronizarAsistenciaDelTurno();
-      renderLista();
-      renderEspejoPA();
-    }
-
-    function filtrarTipo(tipo) {
-      filtroActual = tipo;
-      document.getElementById("btnFijos").classList.toggle("active", tipo === "Fijo");
-      document.getElementById("btnEventuales").classList.toggle("active", tipo === "Eventual");
-      renderLista();
-    }
-
-    function cambiarVista(vista, btn) {
-      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-      document.getElementById(`view-${vista}`).classList.add("active");
-      btn.classList.add("active");
-
-      document.getElementById("headerControls").style.display = vista === "lista" ? "grid" : "none";
-      document.getElementById("saveBar").style.display = vista === "lista" ? "block" : "none";
-
-      if (vista === "espejo") renderEspejoPA();
-      if (vista === "historial") renderHistorial();
-    }
-
-    async function cargarDatosDesdeSheets() {
-      const statusEl = document.getElementById("syncStatus");
-      statusEl.textContent = "⏳ Sincronizando...";
-      try {
-        const res = await fetch(`${API_URL}?action=init`);
-        const data = await res.json();
-        if (data.status === "ok") {
-          personalActivo = data.personal || [];
-          historialDatos = data.historial || [];
-          sincronizarAsistenciaDelTurno();
-          statusEl.textContent = "● Sincronizado";
-          renderLista();
-          renderEspejoPA();
-          renderHistorial();
-        }
-      } catch (e) {
-        statusEl.textContent = "⚠️ Sin conexión";
-      }
-    }
-
-    function renderLista() {
-      const cont = document.getElementById("listaOperadores");
-      const filtrados = personalActivo
-        .filter(p => p.tipo === filtroActual)
-        .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-
-      document.getElementById("contadorVista").textContent = `${filtroActual}s activos: ${filtrados.length}`;
-      cont.innerHTML = filtrados.map(op => {
-        const reg = asistenciaHoy[op.ci] || { estado: "", comentario: "" };
-        return `
-          <div class="op-card">
-            <div class="op-header">
-              <div class="op-name">${op.nombre}</div>
-              <span class="op-ci">CI: ${op.ci}</span>
-            </div>
-            <div class="check-row">
-              <button class="chk-btn present ${reg.estado === 'Asistió' ? 'selected' : ''}"
-                onclick="marcarAsistencia('${op.ci}', 'Asistió')">✔ Asistió</button>
-              <button class="chk-btn absent ${reg.estado === 'Faltó' ? 'selected' : ''}"
-                onclick="marcarAsistencia('${op.ci}', 'Faltó')">✖ Faltó</button>
-            </div>
-            <input type="text" class="comment-input" placeholder="Comentario opcional (vacación, permiso, etc.)"
-              value="${reg.comentario}" onchange="guardarComentario('${op.ci}', this.value)" />
-          </div>
-        `;
-      }).join("");
-    }
-
-    function marcarAsistencia(ci, estado) {
-      if (!asistenciaHoy[ci]) asistenciaHoy[ci] = { estado: "", comentario: "" };
-      asistenciaHoy[ci].estado = (asistenciaHoy[ci].estado === estado) ? "" : estado;
-      renderLista();
-    }
-
-    function guardarComentario(ci, texto) {
-      if (!asistenciaHoy[ci]) asistenciaHoy[ci] = { estado: "", comentario: "" };
-      asistenciaHoy[ci].comentario = texto;
-    }
-
-    function getPAStorageKey() {
-      return `pa_checked_${FECHA_HOY}_${TURNOS[turnoIdx]}`;
-    }
-
-    function getPACheckedMap() {
-      return JSON.parse(localStorage.getItem(getPAStorageKey()) || "{}");
-    }
-
-    function togglePAChecked(ci) {
-      const map = getPACheckedMap();
-      map[ci] = !map[ci];
-      localStorage.setItem(getPAStorageKey(), JSON.stringify(map));
-      renderEspejoPA();
-    }
-
-    function copiarCI(ci, btn) {
-      navigator.clipboard.writeText(ci);
-      const orig = btn.textContent;
-      btn.textContent = "¡Copiado!";
-      setTimeout(() => btn.textContent = orig, 900);
-    }
-
-    function renderEspejoPA() {
-      const cont = document.getElementById("listaEspejoPA");
-      const paMap = getPACheckedMap();
-      const todosAZ = [...personalActivo].sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-
-      let pendientes = 0;
-      cont.innerHTML = todosAZ.map(op => {
-        const isChecked = !!paMap[op.ci];
-        if (!isChecked) pendientes++;
-        const reg = asistenciaHoy[op.ci];
-        const badgeEstado = reg && reg.estado ? ` (${reg.estado})` : "";
-
-        return `
-          <div class="op-card ${isChecked ? 'pa-checked' : ''}">
-            <div class="pa-row">
-              <div>
-                <div class="op-name">${op.nombre}</div>
-                <span class="op-ci">CI: ${op.ci} • ${op.tipo}${badgeEstado}</span>
-              </div>
-              <div style="display:flex; gap:6px; align-items:center;">
-                <button class="btn-copy" onclick="copiarCI('${op.ci}', this)">Copiar CI</button>
-                <label class="pa-chk-label">
-                  <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="togglePAChecked('${op.ci}')" />
-                  PA
-                </label>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      document.getElementById("contadorPA").textContent = `Pendientes: ${pendientes} / ${todosAZ.length}`;
-    }
-
-    async function registrarAsistencia() {
-      const turno = TURNOS[turnoIdx];
-      const registros = [];
-
-      personalActivo.forEach(op => {
-        const reg = asistenciaHoy[op.ci];
-        if (reg && reg.estado) {
-          registros.push({
-            ci: op.ci,
-            nombre: op.nombre,
-            tipo: op.tipo,
-            estado: reg.estado,
-            comentario: reg.comentario || ""
-          });
-        }
-      });
-
-      if (registros.length === 0) {
-        alert("Marca al menos un operador como 'Asistió' o 'Faltó' antes de registrar.");
-        return;
-      }
-
-      const btn = document.querySelector(".btn-save");
-      btn.textContent = "GUARDANDO EN SHEETS...";
-      btn.disabled = true;
-
-      try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "registrar_asistencia",
-            fecha: FECHA_HOY,
-            turno: turno,
-            registros: registros
-          })
-        });
-        const data = await res.json();
-        if (data.status === "ok") {
-          alert(`✅ ${registros.length} registros guardados para ${FECHA_HOY} (${turno}).`);
-          cargarDatosDesdeSheets();
-        } else {
-          alert("Error: " + data.message);
-        }
-      } catch (e) {
-        alert("Error de red al conectar con Google Sheets.");
-      } finally {
-        btn.textContent = "REGISTRAR EN SHEETS";
-        btn.disabled = false;
-      }
-    }
-
-    function abrirModal(modo) {
-      document.getElementById("modalBackdrop").classList.add("open");
-      document.getElementById("modalAddContent").style.display = modo === "add" ? "block" : "none";
-      document.getElementById("modalDelContent").style.display = modo === "del" ? "block" : "none";
-
-      if (modo === "add") {
-        toggleFechaIngreso();
-      } else {
-        const sel = document.getElementById("selectBajaCI");
-        sel.innerHTML = personalActivo
-          .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
-          .map(p => `<option value="${p.ci}">${p.nombre} (CI: ${p.ci} - ${p.tipo})</option>`)
-          .join("");
-      }
-    }
-
-    function cerrarModal() {
-      document.getElementById("modalBackdrop").classList.remove("open");
-    }
-
-    function toggleFechaIngreso() {
-      const tipo = document.getElementById("newTipo").value;
-      document.getElementById("groupFechaIngreso").style.display = tipo === "Eventual" ? "block" : "none";
-    }
-
-    async function guardarNuevoOperador() {
-      const ci = document.getElementById("newCI").value.trim();
-      const nombre = document.getElementById("newNombre").value.trim();
-      const tipo = document.getElementById("newTipo").value;
-      const fechaIngreso = document.getElementById("newFechaIngreso").value;
-
-      if (!ci || !nombre) {
-        alert("Completa el CI y el Nombre Completo.");
-        return;
-      }
-
-      cerrarModal();
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "agregar_personal",
-          ci, nombre, tipo, fechaIngreso
-        })
-      });
-      document.getElementById("newCI").value = "";
-      document.getElementById("newNombre").value = "";
-      cargarDatosDesdeSheets();
-    }
-
-    async function confirmarBaja() {
-      const ci = document.getElementById("selectBajaCI").value;
-      if (!ci) return;
-      cerrarModal();
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "baja_personal", ci })
-      });
-      cargarDatosDesdeSheets();
-    }
-
-    function renderHistorial() {
-      const mes = document.getElementById("filtroMes").value;
-      const q = document.getElementById("buscarHistorial").value.toLowerCase();
-      const cont = document.getElementById("listaHistorial");
-
-      const resumen = {};
-      historialDatos.forEach(h => {
-        if (!h.fecha.startsWith(mes)) return;
-        if (!resumen[h.ci]) {
-          resumen[h.ci] = { ci: h.ci, nombre: h.nombre, tipo: h.tipo, asistio: 0, falto: 0, novedades: [] };
-        }
-        if (h.estado === "Asistió") resumen[h.ci].asistio++;
-        if (h.estado === "Faltó") resumen[h.ci].falto++;
-        if (h.estado === "Faltó" || h.comentario) {
-          resumen[h.ci].novedades.push(`${h.fecha} (${h.turno}): ${h.estado}${h.comentario ? " - " + h.comentario : ""}`);
-        }
-      });
-
-      const lista = Object.values(resumen)
-        .filter(r => r.nombre.toLowerCase().includes(q) || r.ci.includes(q))
-        .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-
-      if (lista.length === 0) {
-        cont.innerHTML = `<div class="status-banner">Sin registros para el mes seleccionado.</div>`;
-        return;
-      }
-
-      cont.innerHTML = lista.map(r => `
-        <div class="hist-card">
-          <div class="op-header" style="margin-bottom:0">
-            <div class="op-name">${r.nombre}</div>
-            <span class="op-ci">CI: ${r.ci}</span>
-          </div>
-          <div class="hist-stats">
-            <span style="color:var(--ok)">✔ Asistencias: ${r.asistio}</span>
-            <span style="color:var(--fail)">✖ Faltas: ${r.falto}</span>
-          </div>
-          ${r.novedades.length > 0 ? `<div class="hist-details">${r.novedades.join("<br>")}</div>` : ""}
-        </div>
-      `).join("");
-    }
-  </script>
+  <!-- Carga secuencial compatible con file:// y servidores web -->
+  <script defer src="js/config.js"></script>
+  <script defer src="js/api.js"></script>
+  <script defer src="js/calendar.js"></script>
+  <script defer src="js/app.js"></script>
 </body>
 </html>
