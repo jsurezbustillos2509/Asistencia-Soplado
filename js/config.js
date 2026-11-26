@@ -10,7 +10,8 @@ const CONFIG = {
     CACHE_PERSONAL: "planta_cache_personal_v2",
     CACHE_TODOS: "planta_cache_todos_v2",
     CACHE_HISTORIAL: "planta_cache_historial_v2",
-    PA_PREFIX: "planta_pa_checked_"
+    PA_PREFIX: "planta_pa_checked_",
+    DRAFT_PREFIX: "planta_draft_v2_"
   }
 };
 

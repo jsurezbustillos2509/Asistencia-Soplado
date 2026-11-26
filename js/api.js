@@ -57,7 +57,8 @@ const ApiService = {
       ...h,
       fecha: Utils.normalizarFecha(h.fecha),
       ci: String(h.ci).trim(),
-      nombre: String(h.nombre).trim()
+      nombre: String(h.nombre).trim(),
+      sincronizadoPA: Boolean(h.sincronizadoPA)
     }));
 
     const payloadNormalizado = { personal, personalTodos, historial };

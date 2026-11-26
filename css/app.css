@@ -65,9 +65,11 @@ body {
   color: var(--accent);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-weight: 800;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   width: 100%;
   outline: none;
+  cursor: pointer;
+  color-scheme: dark;
 }
 
 .shift-btn {
@@ -304,7 +306,37 @@ body {
 
 .op-card.state-present { border-left: 4px solid var(--ok); }
 .op-card.state-absent { border-left: 4px solid var(--fail); }
+.op-card.has-comment {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-soft), var(--shadow-card);
+}
 .op-card.pa-checked { opacity: 0.48; border-left: 4px solid var(--pa-done); }
+
+.op-meta-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.cloud-tag {
+  font-size: 0.66rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 5px;
+  letter-spacing: 0.02em;
+}
+
+.cloud-tag.saved {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.cloud-tag.draft {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
 
 .op-header {
   display: flex;

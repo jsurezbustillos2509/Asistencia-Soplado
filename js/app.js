@@ -139,24 +139,85 @@ const App = {
     return CONFIG.TURNOS[this.state.turnoIdx];
   },
 
+  getDraftStorageKey() {
+    return `${CONFIG.STORAGE_KEYS.DRAFT_PREFIX}${this.state.fechaHoy}_${this.getTurnoActual()}`;
+  },
+
+  guardarBorradorLocal() {
+    try {
+      localStorage.setItem(this.getDraftStorageKey(), JSON.stringify(this.state.asistenciaHoy));
+    } catch (e) {
+      console.warn("No se pudo guardar borrador local:", e);
+    }
+  },
+
+  cargarBorradorLocal() {
+    try {
+      return JSON.parse(localStorage.getItem(this.getDraftStorageKey()) || "{}");
+    } catch (e) {
+      return {};
+    }
+  },
+
+  limpiarBorradorLocal() {
+    localStorage.removeItem(this.getDraftStorageKey());
+  },
+
+  cambiarFecha(nuevaFecha) {
+    if (!nuevaFecha) return;
+    this.state.fechaHoy = nuevaFecha;
+    this.sincronizarAsistenciaDelTurno();
+    this.renderLista();
+    this.renderEspejoPA();
+  },
+
   sincronizarAsistenciaDelTurno() {
     this.state.asistenciaHoy = {};
     this.state.cambiosSinGuardar = false;
     const turno = this.getTurnoActual();
+    const paNubeMap = {};
 
+    // 1. Cargar registros oficiales guardados en Google Sheets
     this.state.historialDatos.forEach(h => {
       if (h.fecha === this.state.fechaHoy && h.turno === turno) {
+        const estadoReal = h.estado === "Sin marcar" ? "" : h.estado;
         this.state.asistenciaHoy[h.ci] = {
-          estado: h.estado,
-          comentario: h.comentario || ""
+          estado: estadoReal,
+          comentario: h.comentario || "",
+          sincronizadoPA: Boolean(h.sincronizadoPA),
+          enNube: Boolean(estadoReal)
         };
+        if (h.sincronizadoPA) {
+          paNubeMap[h.ci] = true;
+        }
+      }
+    });
+
+    // Sincroniza Espejo PA local con lo que ya existe en Sheets para ese día y turno
+    if (Object.keys(paNubeMap).length > 0) {
+      const paLocal = this.getPACheckedMap();
+      localStorage.setItem(this.getPAStorageKey(), JSON.stringify({ ...paLocal, ...paNubeMap }));
+    }
+
+    // 2. Superponer borrador local si quedó trabajo pendiente sin subir a Sheets
+    const borrador = this.cargarBorradorLocal();
+    Object.keys(borrador).forEach(ci => {
+      const item = borrador[ci];
+      if (item && (item.estado || item.comentario)) {
+        this.state.asistenciaHoy[ci] = {
+          estado: item.estado || "",
+          comentario: item.comentario || "",
+          sincronizadoPA: this.state.asistenciaHoy[ci]?.sincronizadoPA || false,
+          enNube: false
+        };
+        this.state.cambiosSinGuardar = true;
       }
     });
   },
 
   ciclarTurno() {
     if (this.state.cambiosSinGuardar) {
-      Utils.mostrarToast("⚠️ Tenías cambios sin guardar en el turno anterior", "fail");
+      Utils.mostrarToast("💾 Borrador guardado localmente en el turno anterior", "info");
     }
     this.state.turnoIdx = (this.state.turnoIdx + 1) % CONFIG.TURNOS.length;
     document.getElementById("textoTurno").textContent = this.getTurnoActual();
@@ -255,16 +316,27 @@ const App = {
     }
 
     cont.innerHTML = visibles.map(op => {
-      const reg = this.state.asistenciaHoy[op.ci] || { estado: "", comentario: "" };
+      const reg = this.state.asistenciaHoy[op.ci] || { estado: "", comentario: "", enNube: false };
       const cardState = reg.estado === "Asistió"
         ? "state-present"
         : (reg.estado === "Faltó" ? "state-absent" : "");
+      const hasCommentClass = (reg.comentario || "").trim().length > 0 ? "has-comment" : "";
+
+      let syncBadge = "";
+      if (reg.estado) {
+        syncBadge = reg.enNube
+          ? `<span class="cloud-tag saved">☁ Guardado</span>`
+          : `<span class="cloud-tag draft">● Sin subir</span>`;
+      }
 
       return `
-        <div class="op-card ${cardState}">
+        <div class="op-card ${cardState} ${hasCommentClass}">
           <div class="op-header">
             <div class="op-name">${Utils.escapeHTML(op.nombre)}</div>
-            <span class="op-ci">CI: ${Utils.escapeHTML(op.ci)}</span>
+            <div class="op-meta-right">
+              <span class="op-ci">CI: ${Utils.escapeHTML(op.ci)}</span>
+              ${syncBadge}
+            </div>
           </div>
           <div class="check-row">
             <button type="button" class="chk-btn present ${reg.estado === "Asistió" ? "selected" : ""}"
@@ -273,7 +345,7 @@ const App = {
               onclick="App.marcarAsistencia('${op.ci}', 'Faltó')">✖ Faltó</button>
           </div>
           <input type="text" class="comment-input"
-            placeholder="Novedad opcional (permiso, vacación, retraso...)"
+            placeholder="Justificación / novedad (permiso, vacación, retraso...)"
             value="${Utils.escapeHTML(reg.comentario)}"
             oninput="App.guardarComentario('${op.ci}', this.value)" />
         </div>
@@ -283,20 +355,24 @@ const App = {
 
   marcarAsistencia(ci, estado) {
     if (!this.state.asistenciaHoy[ci]) {
-      this.state.asistenciaHoy[ci] = { estado: "", comentario: "" };
+      this.state.asistenciaHoy[ci] = { estado: "", comentario: "", enNube: false };
     }
     this.state.asistenciaHoy[ci].estado =
       (this.state.asistenciaHoy[ci].estado === estado) ? "" : estado;
+    this.state.asistenciaHoy[ci].enNube = false;
     this.state.cambiosSinGuardar = true;
+    this.guardarBorradorLocal();
     this.renderLista();
   },
 
   guardarComentario(ci, texto) {
     if (!this.state.asistenciaHoy[ci]) {
-      this.state.asistenciaHoy[ci] = { estado: "", comentario: "" };
+      this.state.asistenciaHoy[ci] = { estado: "", comentario: "", enNube: false };
     }
     this.state.asistenciaHoy[ci].comentario = texto;
+    this.state.asistenciaHoy[ci].enNube = false;
     this.state.cambiosSinGuardar = true;
+    this.guardarBorradorLocal();
   },
 
   /* ========================================================================
@@ -314,11 +390,36 @@ const App = {
     }
   },
 
-  togglePAChecked(ci) {
+  async togglePAChecked(ci) {
     const map = this.getPACheckedMap();
-    map[ci] = !map[ci];
+    const nuevoEstadoPA = !map[ci];
+    map[ci] = nuevoEstadoPA;
     localStorage.setItem(this.getPAStorageKey(), JSON.stringify(map));
+
+    if (this.state.asistenciaHoy[ci]) {
+      this.state.asistenciaHoy[ci].sincronizadoPA = nuevoEstadoPA;
+    }
     this.renderEspejoPA();
+
+    const op = this.state.personalActivo.find(p => p.ci === ci);
+    if (!op) return;
+
+    const reg = this.state.asistenciaHoy[ci] || { estado: "", comentario: "" };
+    try {
+      await ApiService.postAction({
+        action: "sync_pa",
+        fecha: this.state.fechaHoy,
+        turno: this.getTurnoActual(),
+        ci: op.ci,
+        nombre: op.nombre,
+        tipo: op.tipo,
+        estado: reg.estado || "Sin marcar",
+        comentario: (reg.comentario || "").trim(),
+        sincronizadoPA: nuevoEstadoPA
+      });
+    } catch (e) {
+      Utils.mostrarToast("⚠️ PA guardado solo local (sin red)", "fail");
+    }
   },
 
   copiarCI(ci) {
@@ -403,6 +504,7 @@ const App = {
      ======================================================================== */
   async registrarAsistencia() {
     const turno = this.getTurnoActual();
+    const paMap = this.getPACheckedMap();
     const registros = [];
 
     this.state.personalActivo.forEach(op => {
@@ -413,7 +515,8 @@ const App = {
           nombre: op.nombre,
           tipo: op.tipo,
           estado: reg.estado,
-          comentario: (reg.comentario || "").trim()
+          comentario: (reg.comentario || "").trim(),
+          sincronizadoPA: Boolean(paMap[op.ci] || reg.sincronizadoPA)
         });
       }
     });
@@ -437,6 +540,7 @@ const App = {
 
       if (data.status === "ok") {
         this.state.cambiosSinGuardar = false;
+        this.limpiarBorradorLocal();
         Utils.mostrarToast(`✅ ${registros.length} registros guardados (${turno})`, "ok");
         await this.cargarDatosDesdeSheets();
       } else {

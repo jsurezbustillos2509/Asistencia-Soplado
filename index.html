@@ -27,7 +27,7 @@
       <div class="top-bar">
         <div class="date-pill">
           <span class="pill-label">FECHA</span>
-          <input type="text" id="fechaAuto" class="date-box" readonly />
+          <input type="date" id="fechaAuto" class="date-box" onchange="App.cambiarFecha(this.value)" title="Seleccionar fecha operativa" />
         </div>
 
         <button id="btnTurno" class="shift-btn" onclick="App.ciclarTurno()" title="Cambiar turno operativo">

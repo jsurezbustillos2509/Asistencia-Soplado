@@ -148,8 +148,9 @@ const CalendarModule = {
       nombre: r.nombre,
       tipo: r.tipo,
       turno: r.turno,
-      estado: r.estado,
-      comentario: r.comentario || ""
+      estado: (!r.estado || r.estado === "Sin marcar") ? "Sin registro" : r.estado,
+      comentario: r.comentario || "",
+      sincronizadoPA: Boolean(r.sincronizadoPA)
     }));
 
     const cisRegistrados = new Set(registrosDia.map(r => r.ci));
@@ -227,6 +228,7 @@ const CalendarModule = {
           </div>
           <div class="audit-badges">
             <span class="badge-mini ${badgeClass}">${icon} ${item.estado}</span>
+            ${item.sincronizadoPA ? `<span class="badge-mini badge-ok">⚡ PA</span>` : ""}
           </div>
         </div>
       `;
